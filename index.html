@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de eficacia del closer · Lab10</title>
+<style>
+:root{
+  --navy:#071524;--navy-2:#0d2135;--ink:#102235;--muted:#617386;--line:#dfe6ed;
+  --soft:#f4f7fa;--white:#fff;--cyan:#1bb6c9;--blue:#176bde;--green:#18a56f;
+  --amber:#d99016;--red:#d14c4c;--violet:#7457d8;--shadow:0 12px 36px rgba(7,21,36,.09);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#edf2f6;color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,select,input{font:inherit}
+.app{min-height:100vh}
+.topbar{background:linear-gradient(135deg,var(--navy),#0b2943);color:#fff;padding:30px 34px 22px;position:sticky;top:0;z-index:20;box-shadow:0 8px 24px rgba(3,14,25,.22)}
+.toprow{display:flex;gap:20px;justify-content:space-between;align-items:flex-start;max-width:1480px;margin:auto}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8de0e9;font-weight:800;margin-bottom:8px}
+h1{font-size:28px;line-height:1.16;margin:0 0 7px;font-weight:750;letter-spacing:-.035em}
+.subtitle{color:#b9cad8;font-size:13px}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.select-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);padding:7px 10px;border:1px solid rgba(255,255,255,.15);border-radius:10px}
+.select-wrap label{font-size:11px;color:#b9cad8;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+select{background:#fff;color:var(--ink);border:none;border-radius:7px;padding:8px 28px 8px 10px;outline:none;min-width:200px}
+.action{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;padding:10px 13px;border-radius:9px;cursor:pointer;font-weight:700;font-size:12px}
+.action:hover{background:rgba(255,255,255,.15)}
+.tabs{max-width:1480px;margin:18px auto 0;display:flex;gap:5px;overflow:auto;padding-bottom:1px}
+.tab-btn{white-space:nowrap;border:0;background:transparent;color:#9db2c3;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700}
+.tab-btn.active{background:#fff;color:var(--navy)}
+main{max-width:1480px;margin:0 auto;padding:24px 34px 50px}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:2px 0 14px}
+.section-title h2{font-size:20px;margin:0;letter-spacing:-.025em}
+.section-title p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.kpi{padding:16px;min-height:116px;position:relative;overflow:hidden}
+.kpi:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue)}
+.kpi.green:before{background:var(--green)}.kpi.cyan:before{background:var(--cyan)}
+.kpi.amber:before{background:var(--amber)}.kpi.violet:before{background:var(--violet)}
+.kpi-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.kpi-value{font-size:27px;font-weight:780;letter-spacing:-.045em;margin:10px 0 5px;color:var(--navy)}
+.kpi-foot{font-size:11px;color:var(--muted);line-height:1.35}
+.grid-2{display:grid;grid-template-columns:1.16fr .84fr;gap:14px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.panel{padding:18px}
+.panel h3{margin:0 0 4px;font-size:15px;letter-spacing:-.015em}
+.panel .desc{font-size:11px;color:var(--muted);margin-bottom:15px}
+.insight{background:linear-gradient(140deg,#0c2135,#113754);color:#fff;border:0;padding:22px}
+.insight h3{font-size:17px;margin:0 0 10px}.insight p{color:#c9d9e4;margin:0;font-size:13px;line-height:1.6}
+.insight strong{color:#fff}
+.insight-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:17px}
+.mini{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.055);border-radius:10px;padding:11px}
+.mini b{display:block;font-size:19px;margin-bottom:3px}.mini span{font-size:10px;color:#b9cad8;text-transform:uppercase;letter-spacing:.07em}
+.chart{min-height:238px;display:flex;align-items:flex-end;gap:10px;padding:14px 6px 3px;border-top:1px solid #eef2f5;position:relative}
+.bar-col{height:210px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:44px}
+.bar-value{font-size:10px;font-weight:750;color:var(--ink);margin-bottom:5px;white-space:nowrap}
+.bar{width:min(42px,70%);background:linear-gradient(180deg,var(--blue),#61a0ef);border-radius:7px 7px 2px 2px;min-height:2px;transition:.25s}
+.bar.alt{background:linear-gradient(180deg,var(--cyan),#8fdee7)}
+.bar-label{font-size:9px;color:var(--muted);text-align:center;margin-top:7px;line-height:1.2;max-width:110px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.line-chart{height:285px;border-top:1px solid #eef2f5;padding-top:12px}
+.line-chart svg{width:100%;height:100%;overflow:visible}
+.axis-text{font-size:9px;fill:#718294}.grid-line{stroke:#e5ebf0;stroke-width:1}.series-line{fill:none;stroke:var(--blue);stroke-width:3}.series-area{fill:url(#areaFill);opacity:.25}.point{fill:#fff;stroke:var(--blue);stroke-width:2}
+.week-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.week-card{padding:14px;border:1px solid var(--line);border-radius:11px;background:#fff}
+.week-card .week{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:800}
+.week-card .number{font-size:24px;font-weight:800;margin:6px 0 2px}
+.week-card .meta{font-size:10px;color:var(--muted);line-height:1.45}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:11px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{position:sticky;top:0;background:#f3f6f8;color:#55697b;text-transform:uppercase;letter-spacing:.055em;font-size:9px;text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid #edf1f4;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#fafcfd}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:9px;font-weight:800;white-space:nowrap}
+.badge.green{background:#e6f6ef;color:#137a54}.badge.blue{background:#e8f1fd;color:#195ea9}
+.badge.amber{background:#fff3dd;color:#99610b}.badge.red{background:#fdeaea;color:#a63838}
+.badge.gray{background:#edf1f4;color:#5f6f7d}.badge.violet{background:#eeeafd;color:#5c45b1}
+.progress-row{display:grid;grid-template-columns:160px 1fr 65px;align-items:center;gap:10px;margin:11px 0}
+.progress-label{font-size:11px;color:#42576a}.track{height:9px;background:#edf1f4;border-radius:999px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:999px}
+.progress-value{text-align:right;font-weight:750;font-size:11px}
+.metric-list{display:grid;gap:9px}
+.metric{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:10px}
+.metric .left b{display:block;font-size:12px}.metric .left span{font-size:10px;color:var(--muted)}
+.metric .right{font-size:18px;font-weight:800;text-align:right}
+.note{border-left:3px solid var(--amber);background:#fff9ed;padding:12px 14px;border-radius:7px;color:#765119;font-size:11px;line-height:1.55}
+.success-note{border-left-color:var(--green);background:#eef9f4;color:#215f49}
+.search-row{display:flex;gap:10px;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}
+.search{border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;min-width:280px;outline:none}
+.quality-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.quality{padding:14px}.quality b{display:block;font-size:21px;margin-bottom:3px}.quality span{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700}
+.footer{font-size:10px;color:#788997;margin-top:18px;text-align:right}
+.empty{padding:50px;text-align:center;color:var(--muted)}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:1fr}.grid-3{grid-template-columns:1fr 1fr}.week-cards{grid-template-columns:1fr 1fr}.quality-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.topbar{padding:22px 16px 14px;position:relative}.toprow{display:block}.controls{justify-content:flex-start;margin-top:16px}.tabs{margin-top:14px}.tab-btn{padding:9px 10px}main{padding:18px 14px 40px}.kpis{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr}.quality-grid{grid-template-columns:1fr 1fr}.week-cards{grid-template-columns:1fr}.progress-row{grid-template-columns:110px 1fr 50px}.kpi-value{font-size:23px}h1{font-size:23px}}
+@media print{.topbar{position:relative}.controls,.tabs{display:none}.tab-panel{display:block!important;break-before:page}.tab-panel:first-of-type{break-before:auto}main{max-width:none;padding:15px}.card{box-shadow:none}.table-wrap{overflow:visible}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <div class="toprow">
+    <div>
+      <div class="eyebrow">Sales Performance Intelligence</div>
+      <h1>Dashboard de eficacia del closer · Lab10</h1>
+      <div class="subtitle" id="reportSubtitle">Sebastián Rubi · Reporte ejecutivo de ventas</div>
+    </div>
+    <div class="controls">
+      <div class="select-wrap"><label>Cohorte</label><select id="cohortFilter"></select></div>
+      <button class="action" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="summary">Resumen ejecutivo</button>
+    <button class="tab-btn" data-tab="timeline">Línea de tiempo</button>
+    <button class="tab-btn" data-tab="speed">Tiempo a cierre</button>
+    <button class="tab-btn" data-tab="plans">Planes y descuentos</button>
+    <button class="tab-btn" data-tab="efficacy">Eficacia del closer</button>
+    <button class="tab-btn" data-tab="data">Detalle y calidad</button>
+  </nav>
+</header>
+
+<main>
+<section id="summary" class="tab-panel active">
+  <div class="section-title"><div><h2>Resumen ejecutivo</h2><p>Resultado comercial, monetización, velocidad y calidad del cierre.</p></div></div>
+  <div class="kpis" id="summaryKpis"></div>
+  <div class="grid-2">
+    <article class="card insight" id="executiveInsight"></article>
+    <article class="card panel"><h3>Mix de cupos por plan</h3><div class="desc">Cantidad real de cupos; las ventas grupales se desagregan.</div><div class="chart" id="planSeatChart"></div></article>
+  </div>
+  <div class="grid-3" id="summaryHighlights"></div>
+</section>
+
+<section id="timeline" class="tab-panel">
+  <div class="section-title"><div><h2>Análisis de línea de tiempo</h2><p>Cierres diarios, producción semanal y concentración por día.</p></div></div>
+  <div class="grid-2">
+    <article class="card panel"><h3>Cierres por día</h3><div class="desc">Evolución cronológica según fecha de collection.</div><div class="line-chart" id="dailyLineChart"></div></article>
+    <article class="card panel"><h3>Ingresos por día</h3><div class="desc">Permite separar volumen de cierres y valor económico.</div><div class="chart" id="dailyRevenueChart"></div></article>
+  </div>
+  <article class="card panel" style="margin-bottom:14px"><h3>Cierres por semana</h3><div class="desc">Transacciones, cupos e ingresos por semana calendario.</div><div class="week-cards" id="weeklyCards"></div></article>
+  <div class="grid-2">
+    <article class="card panel"><h3>Días pico de cierre</h3><div class="desc">Ranking por número de transacciones.</div><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Día</th><th class="num">Cierres</th><th class="num">Cupos</th><th class="num">Ingresos</th></tr></thead><tbody id="peakDaysTable"></tbody></table></div></article>
+    <article class="card panel"><h3>Desempeño por día de la semana</h3><div class="desc">Acumulado de cierres en el periodo seleccionado.</div><div id="weekdayProgress"></div></article>
+  </div>
+</section>
+
+<section id="speed" class="tab-panel">
+  <div class="section-title"><div><h2>Media y velocidad de cierre</h2><p>Tiempo entre fecha de contacto y fecha de collection.</p></div></div>
+  <div class="kpis" id="speedKpis"></div>
+  <div class="grid-2">
+    <article class="card panel"><h3>Distribución del tiempo a cierre</h3><div class="desc">Número de transacciones por rango de días.</div><div class="chart" id="speedChart"></div></article>
+    <article class="card panel"><h3>Velocidad acumulada</h3><div class="desc">Porcentaje de cierres logrados antes de cada umbral.</div><div id="cumulativeSpeed"></div></article>
+  </div>
+  <article class="card panel"><h3>Tiempo a cierre por plan</h3><div class="desc">Comparación de velocidad y cierres en el mismo día.</div><div class="table-wrap"><table><thead><tr><th>Plan</th><th class="num">Registros medibles</th><th class="num">Promedio</th><th class="num">Mediana</th><th class="num">Mismo día</th></tr></thead><tbody id="speedByPlan"></tbody></table></div></article>
+</section>
+
+<section id="plans" class="tab-panel">
+  <div class="section-title"><div><h2>Planes, precios y descuentos</h2><p>Desglose exacto solicitado, medido en transacciones y cupos.</p></div></div>
+  <div class="kpis" id="planKpis"></div>
+  <article class="card panel" style="margin-bottom:14px"><h3>Desglose de ventas por plan</h3><div class="desc">Los negocios x14, x4 y x2 cuentan como una transacción, pero como 14, 4 y 2 cupos.</div><div class="table-wrap"><table><thead><tr><th>Plan / precio unitario</th><th class="num">Transacciones</th><th class="num">Cupos</th><th class="num">Ingresos</th><th class="num">% cupos</th><th class="num">% ingresos</th></tr></thead><tbody id="planTable"></tbody></table></div></article>
+  <div class="grid-2">
+    <article class="card panel"><h3>Integridad de precio</h3><div class="desc">Peso de cupos a tarifa regular frente a cupos con descuento.</div><div id="priceIntegrity"></div></article>
+    <article class="card panel"><h3>Impacto económico del descuento</h3><div class="desc">Diferencia contra el precio regular de cada plan.</div><div class="metric-list" id="discountImpact"></div></article>
+  </div>
+</section>
+
+<section id="efficacy" class="tab-panel">
+  <div class="section-title"><div><h2>Eficacia observable del closer</h2><p>Scorecard basado únicamente en datos verificables del archivo.</p></div></div>
+  <div class="grid-2">
+    <article class="card panel"><h3>Scorecard operativo</h3><div class="desc">Indicadores que sí pueden medirse con el reporte.</div><div class="metric-list" id="efficacyMetrics"></div></article>
+    <article class="card panel"><h3>Lectura ejecutiva</h3><div class="desc">Fortalezas, riesgos y oportunidades.</div><div id="efficacyNarrative"></div></article>
+  </div>
+  <div class="grid-3" id="efficacyCards"></div>
+  <article class="card panel"><h3>Métricas no calculables con esta fuente</h3><div class="desc">Evita atribuir al closer resultados sin denominador o trazabilidad suficiente.</div><div class="table-wrap"><table><thead><tr><th>Métrica</th><th>Estado</th><th>Dato requerido</th></tr></thead><tbody>
+    <tr><td>Tasa de conversión lead → cierre</td><td><span class="badge amber">No disponible</span></td><td>Total de leads asignados, perdidos, abiertos y ganados.</td></tr>
+    <tr><td>Eficacia de follow-up</td><td><span class="badge amber">No disponible</span></td><td>Número, fecha y canal de cada seguimiento.</td></tr>
+    <tr><td>Horas pico de cierre</td><td><span class="badge amber">No disponible</span></td><td>Timestamp de cierre con hora y zona horaria.</td></tr>
+    <tr><td>Conversión por canal o fuente</td><td><span class="badge amber">No disponible</span></td><td>Origen del lead, canal y campaña.</td></tr>
+    <tr><td>Win rate por etapa</td><td><span class="badge amber">No disponible</span></td><td>Historial de etapas y oportunidades no ganadas.</td></tr>
+  </tbody></table></div></article>
+</section>
+
+<section id="data" class="tab-panel">
+  <div class="section-title"><div><h2>Detalle y calidad de datos</h2><p>Auditoría de registros que sustentan el dashboard.</p></div></div>
+  <div class="quality-grid" id="qualityGrid"></div>
+  <div class="grid-2" style="margin-top:14px">
+    <article class="card panel"><h3>Alertas de calidad</h3><div class="desc">Aspectos que pueden distorsionar la medición.</div><div id="qualityNotes"></div></article>
+    <article class="card panel"><h3>Posibles duplicados</h3><div class="desc">Coincidencias de correo o identidad; requieren validación manual.</div><div id="duplicateList"></div></article>
+  </div>
+  <article class="card panel">
+    <div class="search-row"><div><h3>Detalle de cierres</h3><div class="desc">No se muestran teléfonos ni correos para minimizar exposición de información personal.</div></div><input class="search" id="detailSearch" placeholder="Buscar nombre, plan o fecha"></div>
+    <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Contacto</th><th>Cierre</th><th>Plan</th><th class="num">Cupos</th><th class="num">Valor</th><th class="num">Días</th><th>Calidad</th></tr></thead><tbody id="detailTable"></tbody></table></div>
+  </article>
+  <div class="footer">Fuente: “Reporte de Ventas - Lab10 - Sebastian Rubi.xlsx”. Dashboard generado el 29 de julio de 2026.</div>
+</section>
+</main>
+</div>
+
+<script>
+const DB = {"generatedAt":"2026-07-29","closer":"Sebastián Rubi","records":[{"row":2,"name":"Camilo Piñeros","offer":"Lab10","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-10","closeDate":"2026-07-16","daysToClose":6,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":3,"name":"Katerine Pencue","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-11","closeDate":"2026-07-11","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":4,"name":"Fernando Bolivar Buitrago","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-11","closeDate":"2026-07-11","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":5,"name":"Juan Diego Riveros","offer":"Lab10","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-12","closeDate":"2026-07-12","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":false,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":6,"name":"Manuel Hurtado Ruvera","offer":"Lab10","value":650.0,"cash":650.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":650,"plan":"Basic","priceType":"Precio completo","planLabel":"Basic (USD 650)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":7,"name":"Lisseth Carhuapoma","offer":"Lab10","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":8,"name":"Mauricio Carrero","offer":"Lab10","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":false,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":9,"name":"Federico Ramirez","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":10,"name":"Lina María Toledo","offer":"Lab10 Basic","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":11,"name":"Miguel Antonio Cortez","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":12,"name":"Juan José Gomez Perilla","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":false,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":13,"name":"Juan Sebastian Botero","offer":"Lab10 Basic","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":14,"name":"Julieth Adelina Guerra Soto","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-14","closeDate":"2026-07-14","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":15,"name":"Alejandra Aragon","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-14","closeDate":"2026-07-14","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":16,"name":"Orlando Duque","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-14","closeDate":"2026-07-14","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":17,"name":"Elkin Daniel Aguirre Morales","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-13","closeDate":"2026-07-13","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":false,"discountValue":160,"duplicateGroup":null},{"row":18,"name":"Claudia Gonzalez","offer":"Lab10 Basic","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-17","daysToClose":2,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":19,"name":"Flor Angela Lenis Aguilar","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-15","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":20,"name":"Diego Felipe Flechas","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-20","daysToClose":5,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":1},{"row":21,"name":"Natalia Rentería","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-15","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":22,"name":"Hector de la fuente","offer":"Lab10 Completo x14","value":11200.0,"cash":11200.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-15","daysToClose":0,"quantity":14,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":23,"name":"Jorge Andres Barrientos","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-15","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":24,"name":"Guillermo Daza","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-16","daysToClose":1,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":false,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":25,"name":"Ingmar Paredes Ruales","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-17","daysToClose":2,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":26,"name":"Horacio Rojas Coll","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":27,"name":"Andrea Flores Mora","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-19","daysToClose":2,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":2},{"row":28,"name":"Paulina Nera","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":29,"name":"Sebastian Serrano","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":30,"name":"Katherine Hernandez","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-14","closeDate":"2026-07-17","daysToClose":3,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":31,"name":"Monica Roa","offer":"Lab10","value":650.0,"cash":650.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":null,"closeDate":"2026-07-19","daysToClose":null,"quantity":1,"unitPrice":650,"plan":"Basic","priceType":"Precio completo","planLabel":"Basic (USD 650)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":3},{"row":32,"name":"Laura Sofia Romero Cortes","offer":"Lab10 Completo x2","value":1280.0,"cash":1280.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-16","closeDate":"2026-07-17","daysToClose":1,"quantity":2,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":320,"duplicateGroup":null},{"row":33,"name":"Luis alberto Camacho","offer":"Lab10 Completo","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":34,"name":"Jair alberto Díaz franco","offer":"Lab10 Completo","value":560.0,"cash":560.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-10","closeDate":"2026-07-17","daysToClose":7,"quantity":1,"unitPrice":560,"plan":"Completo","priceType":"Descuento 30%","planLabel":"Completo con 30% de descuento (USD 560)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":240,"duplicateGroup":null},{"row":35,"name":"Giovanny Rodríguez M","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":false,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":36,"name":"Edwin Dudley Triana Borja","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":4},{"row":37,"name":"Edwin Dudley Triana Borja","offer":"Lab10 Completo","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-17","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":4},{"row":38,"name":"Diego Alexander Silva Triana","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":5},{"row":39,"name":"Kendry Parra","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":false,"hasPhone":true,"discountValue":0,"duplicateGroup":6},{"row":40,"name":"Guido Ruiz","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":false,"hasPhone":true,"discountValue":0,"duplicateGroup":7},{"row":41,"name":"Alejandro Alonso","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":8},{"row":42,"name":"Jessica Romero","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-09","closeDate":"2026-07-18","daysToClose":9,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":43,"name":"Adriana Patiño Pineda","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-06","closeDate":"2026-07-18","daysToClose":12,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":44,"name":"Vanessa Mavila","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-08","closeDate":"2026-07-19","daysToClose":11,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":45,"name":"Andrea Florez","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-19","daysToClose":2,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":2},{"row":46,"name":"Javier","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-11","closeDate":"2026-07-19","daysToClose":8,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":47,"name":"Monica Roa","offer":"Lab10 Completo","value":650.0,"cash":650.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-17","closeDate":"2026-07-19","daysToClose":2,"quantity":1,"unitPrice":650,"plan":"Basic","priceType":"Precio completo","planLabel":"Basic (USD 650)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":3},{"row":48,"name":"Maria Osorio","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-19","closeDate":"2026-07-20","daysToClose":1,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":49,"name":"Diego Flechas","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-20","daysToClose":5,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":1},{"row":50,"name":"Diego Alexander Silva Triana","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":5},{"row":51,"name":"Kendry Parra","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":6},{"row":52,"name":"Oscar Jerónimo Rivera Trejo","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":53,"name":"Guido Ruiz","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":7},{"row":54,"name":"Alejandro","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":8},{"row":55,"name":"Josue Rojas Silva","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":56,"name":"Walter Cardenas","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":57,"name":"Jina Ramirez","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-20","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":58,"name":"Mariana Hernandez","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-21","daysToClose":6,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":59,"name":"Estefania Plata Acosta","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-21","closeDate":"2026-07-22","daysToClose":1,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":60,"name":"John Calderon","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-21","closeDate":"2026-07-21","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":61,"name":"Carolina Mancera","offer":"Lab10 Completo x4","value":3200.0,"cash":3200.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-22","daysToClose":0,"quantity":4,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":62,"name":"Natalia Mendez","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-22","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":63,"name":"Andrea Leon","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-22","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":64,"name":"Milena Rico","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-22","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":65,"name":"Sebastian Gomez","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-22","daysToClose":7,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":66,"name":"Diego Rojas","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-22","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":67,"name":"Ismael Méndez Barrón","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-23","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":68,"name":"Samuel","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-23","daysToClose":1,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":69,"name":"Diana Carolina Ortiz","offer":"Lab10","value":520.0,"cash":520.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-15","closeDate":"2026-07-15","daysToClose":0,"quantity":1,"unitPrice":520,"plan":"Basic","priceType":"Descuento 20%","planLabel":"Basic con descuento (USD 520)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":130,"duplicateGroup":null},{"row":70,"name":"Jorge Edward Lopez Vega","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-20","closeDate":"2026-07-23","daysToClose":3,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":71,"name":"John Jaime Espinal","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-23","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":72,"name":"Laura Rondon","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-19","closeDate":"2026-07-23","daysToClose":4,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":73,"name":"José Castillo","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-23","daysToClose":0,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":74,"name":"Alex Tamayo","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-23","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":75,"name":"Jose Rafael Campos","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-23","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":76,"name":"Juliana Lugo Jaramillo","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-24","daysToClose":1,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":77,"name":"Juan David Vergel","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-24","daysToClose":2,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":78,"name":"Andrea Herazo Alvarez","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":null,"closeDate":"2026-07-24","daysToClose":null,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":79,"name":"Sergio Guevara","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-22","closeDate":"2026-07-24","daysToClose":2,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":80,"name":"Luciana Fajardo Serrano","offer":"Lab10 Completo","value":650.0,"cash":650.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-24","closeDate":"2026-07-24","daysToClose":0,"quantity":1,"unitPrice":650,"plan":"Basic","priceType":"Precio completo","planLabel":"Basic (USD 650)","listPrice":650,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":81,"name":"Magali Aparicio Ramos","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-23","closeDate":"2026-07-24","daysToClose":1,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":82,"name":"Carlos Rosas","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-24","closeDate":"2026-07-24","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":83,"name":"Cesar Erazo","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-24","closeDate":"2026-07-24","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null},{"row":84,"name":"Jefferson Amado","offer":"Lab10 Completo","value":640.0,"cash":640.0,"pending":0.0,"cohort":"Lab10 (Julio 20)","contactDate":"2026-07-11","closeDate":"2026-07-17","daysToClose":6,"quantity":1,"unitPrice":640,"plan":"Completo","priceType":"Descuento 20%","planLabel":"Completo con descuento (USD 640)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":160,"duplicateGroup":null},{"row":85,"name":"Juan Carlos Pinzón Amado","offer":"Lab10 Completo","value":800.0,"cash":800.0,"pending":0.0,"cohort":"Lab10 (Agosto 31)","contactDate":"2026-07-28","closeDate":"2026-07-28","daysToClose":0,"quantity":1,"unitPrice":800,"plan":"Completo","priceType":"Precio completo","planLabel":"Completo (USD 800)","listPrice":800,"hasEmail":true,"hasPhone":true,"discountValue":0,"duplicateGroup":null}],"duplicateGroups":[{"group":1,"names":["Diego Felipe Flechas","Diego Flechas"],"values":[640.0,640.0],"dates":["2026-07-20","2026-07-20"]},{"group":2,"names":["Andrea Flores Mora","Andrea Florez"],"values":[800.0,800.0],"dates":["2026-07-19","2026-07-19"]},{"group":3,"names":["Monica Roa","Monica Roa"],"values":[650.0,650.0],"dates":["2026-07-19","2026-07-19"]},{"group":4,"names":["Edwin Dudley Triana Borja","Edwin Dudley Triana Borja"],"values":[640.0,520.0],"dates":["2026-07-17","2026-07-17"]},{"group":5,"names":["Diego Alexander Silva Triana","Diego Alexander Silva Triana"],"values":[800.0,800.0],"dates":["2026-07-20","2026-07-20"]},{"group":6,"names":["Kendry Parra","Kendry Parra"],"values":[800.0,800.0],"dates":["2026-07-20","2026-07-20"]},{"group":7,"names":["Guido Ruiz","Guido Ruiz"],"values":[800.0,800.0],"dates":["2026-07-20","2026-07-20"]},{"group":8,"names":["Alejandro Alonso","Alejandro"],"values":[800.0,800.0],"dates":["2026-07-20","2026-07-20"]}],"methodology":{"numericDateCorrection":true,"sourceTotal":74360}};
+const fmtUSD = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+const fmtUSD2 = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtNum = new Intl.NumberFormat('es-CO',{maximumFractionDigits:1});
+const fmtPct = v => `${(v*100).toFixed(1)}%`;
+const parseISO = s => s ? new Date(`${s}T12:00:00`) : null;
+const iso = d => d.toISOString().slice(0,10);
+const dateFmt = s => s ? parseISO(s).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) : 'N/D';
+const shortDate = s => s ? parseISO(s).toLocaleDateString('es-CO',{day:'2-digit',month:'short'}) : 'N/D';
+const weekday = s => parseISO(s).toLocaleDateString('es-CO',{weekday:'long'});
+const planOrder = [800,650,640,520,560];
+const planShort = {800:'Completo 800',650:'Basic 650',640:'Completo 640',520:'Basic 520',560:'Completo 560'};
+const colors = {800:'#176bde',650:'#18a56f',640:'#1bb6c9',520:'#d99016',560:'#7457d8'};
+let activeRecords = [...DB.records];
+
+function sum(arr, fn){return arr.reduce((a,x)=>a+(fn?fn(x):x),0)}
+function mean(arr){return arr.length?sum(arr)/arr.length:0}
+function median(arr){if(!arr.length)return 0;const s=[...arr].sort((a,b)=>a-b),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function quantile(arr,q){if(!arr.length)return 0;const s=[...arr].sort((a,b)=>a-b),p=(s.length-1)*q,b=Math.floor(p),r=p-b;return s[b+1]!==undefined?s[b]+r*(s[b+1]-s[b]):s[b]}
+function groupBy(arr,fn){return arr.reduce((m,x)=>{const k=fn(x);(m[k]??=[]).push(x);return m},{})}
+function kpi(label,value,foot,tone=''){
+  return `<article class="card kpi ${tone}"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-foot">${foot}</div></article>`;
+}
+function statCard(title,value,text){
+  return `<article class="card panel"><h3>${title}</h3><div style="font-size:28px;font-weight:800;margin:11px 0 6px;letter-spacing:-.04em">${value}</div><div class="desc" style="margin:0;line-height:1.55">${text}</div></article>`;
+}
+function metric(title,sub,value,badge=''){
+  return `<div class="metric"><div class="left"><b>${title}</b><span>${sub}</span></div><div class="right">${value}${badge}</div></div>`;
+}
+function startOfWeek(dateObj){
+  const d=new Date(dateObj);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d;
+}
+function calc(records){
+  const deals=records.length,seats=sum(records,r=>r.quantity),revenue=sum(records,r=>r.value),cash=sum(records,r=>r.cash),pending=sum(records,r=>r.pending);
+  const durations=records.map(r=>r.daysToClose).filter(v=>v!==null);
+  const plans=planOrder.map(price=>{
+    const rows=records.filter(r=>r.unitPrice===price);
+    return {price,label:rows[0]?.planLabel||planShort[price],deals:rows.length,seats:sum(rows,r=>r.quantity),revenue:sum(rows,r=>r.value),discount:sum(rows,r=>r.discountValue),durations:rows.map(r=>r.daysToClose).filter(v=>v!==null)};
+  });
+  const dailyMap=groupBy(records.filter(r=>r.closeDate),r=>r.closeDate);
+  const daily=Object.entries(dailyMap).map(([date,rows])=>({date,deals:rows.length,seats:sum(rows,r=>r.quantity),revenue:sum(rows,r=>r.value)})).sort((a,b)=>a.date.localeCompare(b.date));
+  const weeklyMap={};
+  daily.forEach(d=>{
+    const start=iso(startOfWeek(parseISO(d.date)));weeklyMap[start]??={start,deals:0,seats:0,revenue:0};
+    weeklyMap[start].deals+=d.deals;weeklyMap[start].seats+=d.seats;weeklyMap[start].revenue+=d.revenue;
+  });
+  const weeks=Object.values(weeklyMap).sort((a,b)=>a.start.localeCompare(b.start)).map(w=>({...w,end:iso(new Date(parseISO(w.start).getTime()+6*86400000))}));
+  const dowMap={};
+  const dowOrder=['lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+  records.filter(r=>r.closeDate).forEach(r=>{const d=weekday(r.closeDate);dowMap[d]??={label:d,deals:0,seats:0,revenue:0};dowMap[d].deals++;dowMap[d].seats+=r.quantity;dowMap[d].revenue+=r.value});
+  const weekdays=dowOrder.map(k=>dowMap[k]||{label:k,deals:0,seats:0,revenue:0});
+  return {deals,seats,revenue,cash,pending,durations,plans,daily,weeks,weekdays};
+}
+function renderBarChart(el,data,{valueKey='value',labelKey='label',formatter=v=>fmtNum.format(v),alternate=false}={}){
+  if(!data.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
+  const max=Math.max(...data.map(d=>d[valueKey]),1);
+  el.innerHTML=data.map((d,i)=>`<div class="bar-col"><div class="bar-value">${formatter(d[valueKey])}</div><div class="bar ${alternate&&i%2?'alt':''}" style="height:${Math.max(3,d[valueKey]/max*180)}px;background:${d.color||''}"></div><div class="bar-label">${d[labelKey]}</div></div>`).join('');
+}
+function renderLineChart(el,data){
+  if(!data.length){el.innerHTML='<div class="empty">Sin datos</div>';return}
+  const W=900,H=245,pad={l:42,r:18,t:16,b:38},max=Math.max(...data.map(d=>d.deals),1);
+  const x=i=>pad.l+(data.length===1?0:(W-pad.l-pad.r)*i/(data.length-1));
+  const y=v=>H-pad.b-(H-pad.t-pad.b)*v/max;
+  const points=data.map((d,i)=>`${x(i)},${y(d.deals)}`).join(' ');
+  const area=`${pad.l},${H-pad.b} ${points} ${x(data.length-1)},${H-pad.b}`;
+  let grid='';for(let i=0;i<=4;i++){const val=max*i/4,yy=y(val);grid+=`<line class="grid-line" x1="${pad.l}" y1="${yy}" x2="${W-pad.r}" y2="${yy}"/><text class="axis-text" x="${pad.l-8}" y="${yy+3}" text-anchor="end">${Math.round(val)}</text>`}
+  const labels=data.map((d,i)=>i%Math.ceil(data.length/8)===0||i===data.length-1?`<text class="axis-text" x="${x(i)}" y="${H-14}" text-anchor="middle">${shortDate(d.date)}</text>`:'').join('');
+  const circles=data.map((d,i)=>`<circle class="point" cx="${x(i)}" cy="${y(d.deals)}" r="4"><title>${dateFmt(d.date)}: ${d.deals} cierres</title></circle>`).join('');
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#176bde"/><stop offset="100%" stop-color="#fff"/></linearGradient></defs>${grid}<polygon class="series-area" points="${area}"/><polyline class="series-line" points="${points}"/>${circles}${labels}</svg>`;
+}
+function render(){
+  const c=calc(activeRecords);
+  const durations=c.durations;
+  const measurable=durations.length;
+  const sameDay=durations.filter(d=>d===0).length;
+  const within1=durations.filter(d=>d<=1).length;
+  const within3=durations.filter(d=>d<=3).length;
+  const within7=durations.filter(d=>d<=7).length;
+  const regularSeats=sum(activeRecords.filter(r=>r.priceType==='Precio completo'),r=>r.quantity);
+  const discountedSeats=c.seats-regularSeats;
+  const explicitDiscount=sum(activeRecords,r=>r.discountValue);
+  const preDiscount=c.revenue+explicitDiscount;
+  const groupDeals=activeRecords.filter(r=>r.quantity>1);
+  const peakDeals=[...c.daily].sort((a,b)=>b.deals-a.deals||b.revenue-a.revenue)[0];
+  const peakRevenue=[...c.daily].sort((a,b)=>b.revenue-a.revenue)[0];
+  const activeDays=c.daily.length;
+  const duplicateVisible=activeRecords.filter(r=>r.duplicateGroup).length;
+  const dateRange=c.daily.length?`${dateFmt(c.daily[0].date)} – ${dateFmt(c.daily.at(-1).date)}`:'Sin fechas';
+  document.getElementById('reportSubtitle').textContent=`${DB.closer} · ${dateRange} · ${c.deals} transacciones`;
+
+  document.getElementById('summaryKpis').innerHTML=[
+    kpi('Facturación total',fmtUSD.format(c.revenue),`${fmtUSD.format(c.cash)} collected`,'green'),
+    kpi('Cierres totales',fmtNum.format(c.deals),`${fmtNum.format(c.seats)} cupos vendidos`,'blue'),
+    kpi('Cash collection',fmtPct(c.revenue?c.cash/c.revenue:0),`${fmtUSD.format(c.pending)} pendiente`,'green'),
+    kpi('Ticket por transacción',fmtUSD2.format(c.deals?c.revenue/c.deals:0),`Mediana ${fmtUSD.format(median(activeRecords.map(r=>r.value)))}`,'violet'),
+    kpi('Ingreso por cupo',fmtUSD2.format(c.seats?c.revenue/c.seats:0),'Precio promedio realizado','cyan'),
+    kpi('Media a cierre',`${fmtNum.format(mean(durations))} días`,`${fmtPct(measurable?measurable/c.deals:0)} de cobertura`,'amber')
+  ].join('');
+
+  const coreWeeks=[...c.weeks].sort((a,b)=>b.deals-a.deals).slice(0,2);
+  const coreDeals=sum(coreWeeks,w=>w.deals);
+  document.getElementById('executiveInsight').innerHTML=`<h3>Lectura ejecutiva</h3><p>El periodo registra <strong>${c.deals} transacciones</strong> equivalentes a <strong>${c.seats} cupos</strong> y <strong>${fmtUSD.format(c.revenue)}</strong> facturados, con una cobranza del <strong>${fmtPct(c.revenue?c.cash/c.revenue:0)}</strong>. La operación combina alta velocidad —<strong>${fmtPct(measurable?sameDay/measurable:0)} de los cierres medibles ocurrió el mismo día</strong>— con una concentración importante: <strong>${peakDeals?peakDeals.deals:0} cierres</strong> se realizaron el ${peakDeals?dateFmt(peakDeals.date):'N/D'}. Las dos semanas más productivas reúnen <strong>${fmtPct(c.deals?coreDeals/c.deals:0)}</strong> del volumen.</p><div class="insight-grid"><div class="mini"><b>${fmtPct(c.seats?regularSeats/c.seats:0)}</b><span>Cupos a precio regular</span></div><div class="mini"><b>${fmtPct(measurable?within3/measurable:0)}</b><span>Cierres en ≤ 3 días</span></div><div class="mini"><b>${groupDeals.length}</b><span>Ventas grupales</span></div><div class="mini"><b>${fmtNum.format(activeDays?c.deals/activeDays:0)}</b><span>Cierres por día activo</span></div></div>`;
+  renderBarChart(document.getElementById('planSeatChart'),c.plans.filter(p=>p.seats).map(p=>({label:planShort[p.price],value:p.seats,color:colors[p.price]})));
+
+  const top3=[...c.daily].sort((a,b)=>b.deals-a.deals).slice(0,3);
+  document.getElementById('summaryHighlights').innerHTML=[
+    statCard('Día pico por cierres',peakDeals?`${peakDeals.deals} cierres`:'N/D',peakDeals?`${dateFmt(peakDeals.date)} · ${peakDeals.seats} cupos · ${fmtUSD.format(peakDeals.revenue)}`:'Sin datos'),
+    statCard('Día pico por ingresos',peakRevenue?fmtUSD.format(peakRevenue.revenue):'N/D',peakRevenue?`${dateFmt(peakRevenue.date)} · ${peakRevenue.deals} transacciones · ${peakRevenue.seats} cupos`:'Sin datos'),
+    statCard('Concentración top 3 días',fmtPct(c.deals?sum(top3,d=>d.deals)/c.deals:0),`${sum(top3,d=>d.deals)} de ${c.deals} cierres ocurrieron en los tres días de mayor volumen.`)
+  ].join('');
+
+  renderLineChart(document.getElementById('dailyLineChart'),c.daily);
+  renderBarChart(document.getElementById('dailyRevenueChart'),c.daily.map(d=>({label:shortDate(d.date),value:d.revenue})),{formatter:fmtUSD.format,alternate:true});
+  document.getElementById('weeklyCards').innerHTML=c.weeks.map((w,i)=>`<div class="week-card"><div class="week">${shortDate(w.start)} – ${shortDate(w.end)}</div><div class="number">${w.deals}</div><div class="meta">${w.seats} cupos · ${fmtUSD.format(w.revenue)}<br>${fmtPct(c.deals?w.deals/c.deals:0)} de los cierres</div></div>`).join('');
+  document.getElementById('peakDaysTable').innerHTML=[...c.daily].sort((a,b)=>b.deals-a.deals||b.revenue-a.revenue).slice(0,8).map(d=>`<tr><td>${dateFmt(d.date)}</td><td style="text-transform:capitalize">${weekday(d.date)}</td><td class="num"><b>${d.deals}</b></td><td class="num">${d.seats}</td><td class="num">${fmtUSD.format(d.revenue)}</td></tr>`).join('');
+  const maxDow=Math.max(...c.weekdays.map(d=>d.deals),1);
+  document.getElementById('weekdayProgress').innerHTML=c.weekdays.map(d=>`<div class="progress-row"><div class="progress-label" style="text-transform:capitalize">${d.label}</div><div class="track"><div class="fill" style="width:${d.deals/maxDow*100}%"></div></div><div class="progress-value">${d.deals}</div></div>`).join('');
+
+  document.getElementById('speedKpis').innerHTML=[
+    kpi('Promedio',`${fmtNum.format(mean(durations))} días`,`${measurable} registros medibles`,'blue'),
+    kpi('Mediana',`${fmtNum.format(median(durations))} días`,'La mitad cerró en este tiempo o menos','green'),
+    kpi('Percentil 75',`${fmtNum.format(quantile(durations,.75))} días`,'75% cerró antes de este umbral','cyan'),
+    kpi('Mismo día',fmtPct(measurable?sameDay/measurable:0),`${sameDay} cierres`,'green'),
+    kpi('En ≤ 3 días',fmtPct(measurable?within3/measurable:0),`${within3} cierres`,'violet'),
+    kpi('Máximo observado',`${durations.length?Math.max(...durations):0} días`,'Mayor ciclo de cierre registrado','amber')
+  ].join('');
+  const buckets=[
+    {label:'Mismo día',value:durations.filter(d=>d===0).length},
+    {label:'1 día',value:durations.filter(d=>d===1).length},
+    {label:'2–3 días',value:durations.filter(d=>d>=2&&d<=3).length},
+    {label:'4–7 días',value:durations.filter(d=>d>=4&&d<=7).length},
+    {label:'8+ días',value:durations.filter(d=>d>=8).length}
+  ];
+  renderBarChart(document.getElementById('speedChart'),buckets,{alternate:true});
+  document.getElementById('cumulativeSpeed').innerHTML=[
+    ['Mismo día',sameDay],['≤ 1 día',within1],['≤ 3 días',within3],['≤ 7 días',within7]
+  ].map(([label,val])=>`<div class="progress-row"><div class="progress-label">${label}</div><div class="track"><div class="fill" style="width:${measurable?val/measurable*100:0}%"></div></div><div class="progress-value">${fmtPct(measurable?val/measurable:0)}</div></div>`).join('')+
+  `<div class="note success-note" style="margin-top:18px">Entre los cierres que no se lograron el mismo día, el promedio fue de <b>${fmtNum.format(mean(durations.filter(d=>d>0)))} días</b>. Esto separa la rapidez inmediata del ciclo que sí requirió seguimiento.</div>`;
+  document.getElementById('speedByPlan').innerHTML=c.plans.filter(p=>p.deals).map(p=>`<tr><td><span class="badge blue">${p.label}</span></td><td class="num">${p.durations.length}</td><td class="num">${fmtNum.format(mean(p.durations))} días</td><td class="num">${fmtNum.format(median(p.durations))} días</td><td class="num">${fmtPct(p.durations.length?p.durations.filter(d=>d===0).length/p.durations.length:0)}</td></tr>`).join('');
+
+  document.getElementById('planKpis').innerHTML=[
+    kpi('Completo USD 800',c.plans.find(p=>p.price===800)?.seats||0,`${c.plans.find(p=>p.price===800)?.deals||0} transacciones`,'blue'),
+    kpi('Basic USD 650',c.plans.find(p=>p.price===650)?.seats||0,`${c.plans.find(p=>p.price===650)?.deals||0} transacciones`,'green'),
+    kpi('Completo USD 640',c.plans.find(p=>p.price===640)?.seats||0,`${c.plans.find(p=>p.price===640)?.deals||0} transacciones`,'cyan'),
+    kpi('Basic USD 520',c.plans.find(p=>p.price===520)?.seats||0,`${c.plans.find(p=>p.price===520)?.deals||0} transacciones`,'amber'),
+    kpi('Completo USD 560',c.plans.find(p=>p.price===560)?.seats||0,`${c.plans.find(p=>p.price===560)?.deals||0} transacciones`,'violet'),
+    kpi('Cupos con descuento',discountedSeats,`${fmtPct(c.seats?discountedSeats/c.seats:0)} del total`,'amber')
+  ].join('');
+  document.getElementById('planTable').innerHTML=c.plans.filter(p=>p.deals).map(p=>`<tr><td><span class="badge ${p.price===800?'blue':p.price===650?'green':p.price===640?'violet':'amber'}">${p.label}</span></td><td class="num">${p.deals}</td><td class="num"><b>${p.seats}</b></td><td class="num">${fmtUSD.format(p.revenue)}</td><td class="num">${fmtPct(c.seats?p.seats/c.seats:0)}</td><td class="num">${fmtPct(c.revenue?p.revenue/c.revenue:0)}</td></tr>`).join('')+
+  `<tr style="background:#f7f9fb"><td><b>Total</b></td><td class="num"><b>${c.deals}</b></td><td class="num"><b>${c.seats}</b></td><td class="num"><b>${fmtUSD.format(c.revenue)}</b></td><td class="num"><b>100%</b></td><td class="num"><b>100%</b></td></tr>`;
+  document.getElementById('priceIntegrity').innerHTML=[
+    {label:'Precio regular',value:regularSeats,color:'#18a56f'},
+    {label:'Con descuento',value:discountedSeats,color:'#d99016'}
+  ].map(d=>`<div class="progress-row"><div class="progress-label">${d.label}</div><div class="track"><div class="fill" style="width:${c.seats?d.value/c.seats*100:0}%;background:${d.color}"></div></div><div class="progress-value">${fmtPct(c.seats?d.value/c.seats:0)}</div></div>`).join('')+
+  `<div class="note" style="margin-top:18px">El precio promedio realizado fue de <b>${fmtUSD2.format(c.seats?c.revenue/c.seats:0)}</b> por cupo. El análisis separa el plan Basic del Completo para no tratar toda diferencia frente a USD 800 como descuento.</div>`;
+  document.getElementById('discountImpact').innerHTML=[
+    metric('Ingreso antes de descuentos','Precio regular según el plan',fmtUSD.format(preDiscount)),
+    metric('Descuento explícito concedido','USD 640, USD 520 y USD 560',fmtUSD.format(explicitDiscount)),
+    metric('Tasa efectiva de descuento','Sobre el valor regular del mix',fmtPct(preDiscount?explicitDiscount/preDiscount:0)),
+    metric('Ingreso retenido','Facturación / valor regular del mix',fmtPct(preDiscount?c.revenue/preDiscount:0))
+  ].join('');
+
+  const bestWeek=[...c.weeks].sort((a,b)=>b.deals-a.deals||b.revenue-a.revenue)[0];
+  document.getElementById('efficacyMetrics').innerHTML=[
+    metric('Cobranza','Cash collected / facturado',fmtPct(c.revenue?c.cash/c.revenue:0)),
+    metric('Velocidad inmediata','Cierres medibles el mismo día',fmtPct(measurable?sameDay/measurable:0)),
+    metric('Velocidad a 3 días','Cierres medibles en máximo 3 días',fmtPct(measurable?within3/measurable:0)),
+    metric('Integridad de precio','Cupos a tarifa regular',fmtPct(c.seats?regularSeats/c.seats:0)),
+    metric('Productividad diaria','Cierres / días con actividad',fmtNum.format(activeDays?c.deals/activeDays:0)),
+    metric('Mejor semana',bestWeek?`${bestWeek.deals} cierres`:'N/D',bestWeek?`${shortDate(bestWeek.start)} – ${shortDate(bestWeek.end)}`:'')
+  ].join('');
+  const strengths=[];
+  if(c.revenue&&c.cash/c.revenue>=.98) strengths.push('Cobranza prácticamente total, sin cartera pendiente registrada.');
+  if(measurable&&sameDay/measurable>=.5) strengths.push('Alta capacidad de cierre inmediato: la mayoría de oportunidades medibles cierra el mismo día.');
+  if(c.seats&&regularSeats/c.seats>=.65) strengths.push('La mayor parte de los cupos conserva precio regular.');
+  const risks=[];
+  if(c.deals&&sum([...c.daily].sort((a,b)=>b.deals-a.deals).slice(0,3),d=>d.deals)/c.deals>.4) risks.push('Volumen concentrado en pocos días; conviene revisar dependencia de campañas o eventos.');
+  if(discountedSeats/c.seats>.25) risks.push('Casi una tercera parte de los cupos utiliza alguna modalidad de descuento.');
+  if(duplicateVisible) risks.push('Existen registros potencialmente duplicados que deben validarse antes de usar el dashboard para comisiones.');
+  document.getElementById('efficacyNarrative').innerHTML=`<div class="note success-note"><b>Fortalezas</b><br>${strengths.map(x=>'• '+x).join('<br>')||'• Sin datos suficientes.'}</div><div class="note" style="margin-top:10px"><b>Riesgos y oportunidades</b><br>${risks.map(x=>'• '+x).join('<br>')||'• Sin alertas relevantes.'}</div>`;
+  document.getElementById('efficacyCards').innerHTML=[
+    statCard('Ventas grupales',`${groupDeals.length} negocios`,`${sum(groupDeals,r=>r.quantity)} cupos y ${fmtUSD.format(sum(groupDeals,r=>r.value))} generados mediante operaciones de más de un cupo.`),
+    statCard('Ritmo semanal máximo',bestWeek?`${bestWeek.deals} cierres`:'N/D',bestWeek?`${bestWeek.seats} cupos y ${fmtUSD.format(bestWeek.revenue)} durante la semana ${shortDate(bestWeek.start)}–${shortDate(bestWeek.end)}.`:'Sin datos'),
+    statCard('Concentración diaria',peakDeals?fmtPct(c.deals?peakDeals.deals/c.deals:0):'N/D',peakDeals?`El día pico concentró ${peakDeals.deals} de ${c.deals} transacciones.`:'Sin datos')
+  ].join('');
+
+  const missingContact=activeRecords.filter(r=>!r.contactDate).length;
+  const missingClose=activeRecords.filter(r=>!r.closeDate).length;
+  const missingEmail=activeRecords.filter(r=>!r.hasEmail).length;
+  const missingPhone=activeRecords.filter(r=>!r.hasPhone).length;
+  document.getElementById('qualityGrid').innerHTML=[
+    `<article class="card quality"><b>${c.deals}</b><span>Registros analizados</span></article>`,
+    `<article class="card quality"><b>${missingContact}</b><span>Sin fecha de contacto</span></article>`,
+    `<article class="card quality"><b>${missingClose}</b><span>Sin fecha de cierre</span></article>`,
+    `<article class="card quality"><b>${missingEmail+missingPhone}</b><span>Campos de contacto faltantes</span></article>`,
+    `<article class="card quality"><b>${new Set(activeRecords.filter(r=>r.duplicateGroup).map(r=>r.duplicateGroup)).size}</b><span>Grupos a revisar</span></article>`
+  ].join('');
+  document.getElementById('qualityNotes').innerHTML=`<div class="note"><b>Normalización aplicada</b><br>Los seriales numéricos de Excel presentaban una inversión mes–día por configuración regional. Para calcular la velocidad de cierre se reinterpretaron como fechas día/mes. La corrección evita duraciones negativas y mantiene el periodo comercial en julio de 2026.</div><div class="note" style="margin-top:10px"><b>Uso recomendado</b><br>Las cifras principales reflejan todos los registros y coinciden con el total facturado del archivo. Antes de calcular comisiones o desempeño definitivo, valida los posibles duplicados.</div>`;
+  const visibleDupGroups=[...new Set(activeRecords.filter(r=>r.duplicateGroup).map(r=>r.duplicateGroup))];
+  document.getElementById('duplicateList').innerHTML=visibleDupGroups.length?visibleDupGroups.map(id=>{
+    const rows=activeRecords.filter(r=>r.duplicateGroup===id);
+    return `<div class="metric"><div class="left"><b>Grupo ${id}: ${rows.map(r=>r.name).join(' / ')}</b><span>${rows.map(r=>dateFmt(r.closeDate)).join(' · ')}</span></div><div class="right">${fmtUSD.format(sum(rows,r=>r.value))}</div></div>`;
+  }).join(''):'<div class="note success-note">No se identificaron coincidencias de alta confianza en la selección actual.</div>';
+  renderDetail();
+}
+function renderDetail(){
+  const q=document.getElementById('detailSearch').value.toLowerCase().trim();
+  const rows=activeRecords.filter(r=>!q||[r.name,r.planLabel,r.closeDate,r.contactDate].join(' ').toLowerCase().includes(q));
+  document.getElementById('detailTable').innerHTML=rows.map(r=>`<tr><td><b>${r.name}</b></td><td>${dateFmt(r.contactDate)}</td><td>${dateFmt(r.closeDate)}</td><td><span class="badge ${r.priceType==='Precio completo'?'blue':'amber'}">${r.planLabel}</span></td><td class="num">${r.quantity}</td><td class="num">${fmtUSD.format(r.value)}</td><td class="num">${r.daysToClose===null?'N/D':r.daysToClose}</td><td>${r.duplicateGroup?'<span class="badge red">Revisar duplicado</span>':'<span class="badge green">OK</span>'}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">Sin coincidencias</td></tr>';
+}
+function setup(){
+  const cohorts=['Todas las cohortes',...new Set(DB.records.map(r=>r.cohort))];
+  const select=document.getElementById('cohortFilter');
+  select.innerHTML=cohorts.map(c=>`<option value="${c}">${c}</option>`).join('');
+  select.addEventListener('change',()=>{activeRecords=select.value==='Todas las cohortes'?[...DB.records]:DB.records.filter(r=>r.cohort===select.value);render()});
+  document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active');
+  }));
+  document.getElementById('detailSearch').addEventListener('input',renderDetail);
+  render();
+}
+setup();
+</script>
+</body>
+</html>
